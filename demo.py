@@ -1,11 +1,9 @@
+from snaky.snaky_contoller import SnakyController
 import pyglet
 from pyglet import window
 from pyglet.window import key
 from pyglet import shapes
-from snaky import SnakyViewModel, CELL_STATE, Direction
-import random
-
-
+from snaky import SnakyController, CELL_STATE, Direction
 
 COLORS = {
     CELL_STATE.OUTSIDE: (0,0,0),
@@ -27,7 +25,7 @@ class SnakyView(pyglet.window.Window):
 
         self.make_grid()
 
-        self.vm = SnakyViewModel(grid_dims[0], grid_dims[1])
+        self.vm = SnakyController(grid_dims[0], grid_dims[1], on_kill=self.on_killed, on_win=self.on_win)
         self.snake = self.vm.hatch_snake(3)
         f = self.vm.make_food()
 
@@ -53,20 +51,24 @@ class SnakyView(pyglet.window.Window):
         self.clear()
         self.batch.draw()
 
+    def on_killed(self, snake, controller):
+        self.killed = True
+
+    def on_win(self, snake, controller):
+        pass
+
     def update(self, delta_time):
         """Animate the shapes"""
         self.time += delta_time
 
         if not self.killed:
             state = self.vm.step()
-            if state == CELL_STATE.OUTSIDE or state == CELL_STATE.SNAKE:
-                self.killed = True
 
             for col in range(self.grid_dims[0]):
                 for row in range(self.grid_dims[1]):
                     s = self.grid[self.grid_dims[1] - 1 - row][col]
                     s.color = COLORS[self.vm.world[row][col]]
-            
+
             self.score_label.text = f"Score: {self.snake.size() - 4}"
 
     def on_key_press(self, symbol, modifiers):
